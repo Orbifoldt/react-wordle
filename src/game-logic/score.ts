@@ -40,8 +40,8 @@ export default function wordScore(guess: string, target: string): LetterScore[] 
     return score
 }
 
-const asIndexedArray = (input: string): Array<[string, number]> => input.split("").map((elt, idx) => [elt, idx])
-const project = (array: Array<Array<any>>, i: number): Array<any> => array.map((arr) => arr[i])
+const asIndexedArray = (str: string): Array<[string, number]> => str.split("").map((elt, idx) => [elt, idx])
+const project = (table: Array<Array<any>>, column: number): Array<any> => table.map((arr) => arr[column])
 const deleteFirst = <T,>(array: Array<T>, elt: T) => {
     const idx = array.findIndex(x => x === elt)
     array.splice(idx, 1)

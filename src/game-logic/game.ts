@@ -79,3 +79,9 @@ export default class WordleGame {
 }
 
 
+export const exampleGame = () => {
+    const game = new WordleGame(5, 5)
+    game.guess("LOLLY")
+    game.guess("ADOBE")
+    return game
+}

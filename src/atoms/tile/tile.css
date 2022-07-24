@@ -18,3 +18,6 @@
 .tile--green{
     background-color:green;
 }
+.tile--gray{
+    background-color: dimgray;
+}
