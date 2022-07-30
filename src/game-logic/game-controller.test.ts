@@ -12,8 +12,8 @@ const guess2: string = "ABORT"
 const guess3: string = "OUIJA"
 
 
-const mockRandomWord: jest.Mock<string, [number]> = jest.fn()
-    .mockImplementation((num: number) => target)
+const mockRandomWord: jest.Mock<string, []> = jest.fn()
+    .mockImplementation(() => target)
 const mockIsWordValid: jest.Mock<boolean, [string]> = jest.fn()
     .mockImplementation(() => true)
 jest.mock('./random-words', () => {
@@ -21,7 +21,7 @@ jest.mock('./random-words', () => {
     return {
         __esModule: true,
         ...originalRandomWordsModule,  // partial mock
-        randomWord: () => mockRandomWord(0),
+        randomWord: () => mockRandomWord(),
         isWordValid: (input: string) => mockIsWordValid(input)
     }
 });
@@ -42,12 +42,10 @@ describe("should provide a view of the Wordle Game", () => {
     })
 
     test('when typing the letters should be displayed in uppercase, without being scored', () => {
-        const gameController = new WordleGameController()
-        gameController.input("a")
-        gameController.input("B")
-        gameController.input("c")
-
-        const [guesses, scores] = gameController.fullBoard
+        const [guesses, scores] = new WordleGameController().input("a")
+            .input("B")
+            .input("c")
+            .fullBoard
 
         expect(guesses).toHaveLength(5)
         expect(guesses[0]).toEqual(["A", "B", "C", "", ""])
@@ -57,8 +55,7 @@ describe("should provide a view of the Wordle Game", () => {
     })
 
     test('should show the guessed word after submitting the guess', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
+        const gameController = guessWord(new WordleGameController(), guess1)
 
         const expectedScore = wordScore(guess1, target)
         const [guesses, scores] = gameController.fullBoard
@@ -74,11 +71,9 @@ describe("should provide a view of the Wordle Game", () => {
     })
 
     test('should show the guessed words after submitting multiple guesses', () => {
-        const gameController = new WordleGameController()
         const words = [guess1, guess2, guess3]
         const expectedScores = words.map((guess) => wordScore(guess, target))
-
-        words.forEach((guess) => guessWord(gameController, guess))
+        const gameController = guessWords(new WordleGameController(), words)
 
         const [guesses, scores] = gameController.fullBoard
 
@@ -90,21 +85,19 @@ describe("should provide a view of the Wordle Game", () => {
 
 
     test('should reset current guess after guessing a valid word', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
+        const gameController = guessWord(new WordleGameController(), guess1)
 
         expect(gameController.currentGuess).toEqual("")
     })
 
 
     test('BACKSPACE command should remove the latest guessed letter', () => {
-        const gameController = new WordleGameController()
-        gameController.input("a")
-        gameController.input("B")
-        gameController.input("c")
-        gameController.input(Commands.BACKSPACE)
-
-        const [guesses, scores] = gameController.fullBoard
+        const [guesses, scores] = new WordleGameController()
+            .input("a")
+            .input("B")
+            .input("c")
+            .input(Commands.BACKSPACE)
+            .fullBoard
 
         expect(guesses).toHaveLength(5)
         expect(guesses[0]).toEqual(["A", "B", "", "", ""])
@@ -114,19 +107,56 @@ describe("should provide a view of the Wordle Game", () => {
     })
 
     test('should correctly show when game is won', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
-        guessWord(gameController, guess2)
-        guessWord(gameController, target)
+        const gameController = guessWords(new WordleGameController(), [guess1, guess2, target])
 
         expect(gameController.state).toEqual(GameState.WON)
     })
 
+    test('when game is won at final attempt should not add additional rows', () => {
+        const words = [guess1, guess1, guess1, guess1, target]
+        const expectedScores = words.map((word)=>wordScore(word, target))
+
+        const gameController = guessWords(new WordleGameController(), words)
+        const [guesses, scores] = gameController.fullBoard
+
+        expect(gameController.state).toEqual(GameState.WON)
+        expect(guesses.map((guess) => guess.join(''))).toEqual(words)
+        expect(scores).toEqual(expectedScores)
+    })
+
     test('should correctly show when game is lost', () => {
-        const gameController = new WordleGameController()
-        Array(5).fill(null).forEach((_) => guessWord(gameController, guess1))
+        const gameController = guessWords(new WordleGameController(), [guess1, guess1, guess1, guess1, guess1])
 
         expect(gameController.state).toEqual(GameState.LOST)
+    })
+
+    test('when game is lost should not add additional rows', () => {
+        const gameController = guessWords(new WordleGameController(), [guess1, guess1, guess1, guess1, guess1])
+        expect(gameController.state).toEqual(GameState.LOST)
+
+        const expectedScore = wordScore(guess1, target)
+        const [guesses, scores] = gameController.fullBoard
+
+        expect(guesses).toHaveLength(5)
+        guesses.forEach((guess) => expect(guess.join('')).toEqual(guess1))
+        expect(scores).toHaveLength(5)
+        scores.forEach((score) => expect(score).toEqual(expectedScore))
+    })
+
+    test('should not allow more input when game is won', () => {
+        let gameController = guessWord(new WordleGameController(), target)
+        expect(gameController.state).toEqual(GameState.WON)
+
+        gameController = gameController.input("A")
+        expect(gameController.currentGuess).toEqual("")
+    })
+
+    test('should not allow more input after the game is lost', () => {
+        let gameController = guessWords(new WordleGameController(), [guess1, guess1, guess1, guess1, guess1])
+        expect(gameController.state).toEqual(GameState.LOST)
+
+        gameController = gameController.input("A")
+        expect(gameController.currentGuess).toEqual("")
     })
 
 })
@@ -141,8 +171,7 @@ describe('controller should allow sending command to underlying game', () => {
     })
 
     test('ENTER command should submit a guess', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
+        guessWord(new WordleGameController(), guess1)
 
         expect(spyGuess).toBeCalledTimes(1)
         expect(spyGuess).toBeCalledWith(guess1)
@@ -150,10 +179,7 @@ describe('controller should allow sending command to underlying game', () => {
     })
 
     test('using ENTER command multiple times should submit each guess', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
-        guessWord(gameController, guess2)
-        guessWord(gameController, guess3)
+        guessWords(new WordleGameController(), [guess1, guess2, guess3])
 
         expect(spyGuess).toBeCalledTimes(3)
         expect(spyGuess).toBeCalledWith(guess1)
@@ -163,9 +189,8 @@ describe('controller should allow sending command to underlying game', () => {
     })
 
     test('RESET command should reset the game', () => {
-        const gameController = new WordleGameController()
-        guessWord(gameController, guess1)
-        gameController.input(Commands.RESET)
+        guessWord(new WordleGameController(), guess1)
+            .input(Commands.RESET)
 
         expect(spyGuess).toBeCalledTimes(1)
         expect(spyReset).toBeCalledTimes(1)
@@ -174,8 +199,15 @@ describe('controller should allow sending command to underlying game', () => {
 
 
 function guessWord(game: WordleGameController, word: string) {
-    word.split('').forEach((letter) => game.input(letter))
-    game.input(Commands.ENTER)
+    let newGame = game
+    word.split('').forEach((letter) => newGame = newGame.input(letter))
+    return newGame.input(Commands.ENTER)
+}
+
+function guessWords(game: WordleGameController, words: string[]) {
+    let newGame = game
+    words.forEach((word) => newGame = guessWord(newGame, word))
+    return newGame
 }
 
 

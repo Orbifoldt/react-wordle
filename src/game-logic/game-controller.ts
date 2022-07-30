@@ -1,4 +1,5 @@
-import WordleGame, { GameError } from "./game"
+import { fillToSize } from "../common/functional-method"
+import WordleGame, { GameState } from "./game"
 import { LetterScore } from "./score"
 
 
@@ -13,57 +14,67 @@ export class Score extends LetterScore {
 }
 
 /**
- * A controller for a Wordle game. It provides a view on a WordleGame object and additionally keeps tracks of the 
+ * An immutable controller for a Wordle game. It provides a view on a WordleGame object and additionally keeps tracks of the 
  * current inserted letters and the rows that weren't guessed yet.
  */
 export default class WordleGameController {
-    private game: WordleGame
     private _currentGuess: string = ""
 
-    constructor(public readonly wordLength: number = 5, public readonly maxGuesses: number = 5) {
-        this.game = new WordleGame(wordLength, maxGuesses)
+    constructor(
+        public readonly wordLength: number = 5,
+        public readonly maxGuesses: number = 5,
+        private game: WordleGame = new WordleGame(wordLength, maxGuesses),
+        currentGuess: string = "",
+    ) {
+        this._currentGuess = currentGuess
     }
 
-    get currentGuess() { return this._currentGuess }
-    get currentGuessArray() {
-        const x = this.currentGuess.split('')
-        fillToSize(x, this.wordLength, "")
-        return x
-    }
-    get currentGuessIndex() { return this.game.guesses.length } // no -1 to compensate for current guess
     get state() { return this.game.state }
+    get currentGuessIndex() { return this.game.guesses.length } // no -1 to compensate for current guess
+    get currentGuess() { return this._currentGuess }
+    get currentGuessArray() { return fillToSize(this.currentGuess.split(''), this.wordLength, "") }
 
     get fullBoard(): [string[][], Score[][]] {
-        const board: string[][] = [
-            ...this.game.guesses.map((guess) => guess.split('')),
-            this.currentGuessArray
-        ]
-        fillToSize(board, this.maxGuesses, this.emptyWord())
-        const score: LetterScore[][] = this.game.scores
-        fillToSize(score, this.maxGuesses, this.unscoredArray())
-        return [board, score]
+        const words: string[][] = this.game.guesses.map((guess) => guess.split(''))
+        if (words.length < this.maxGuesses) {
+            words.push(this.currentGuessArray)
+        }
+        fillToSize(words, this.maxGuesses, this.emptyWord())
+
+        const scores: LetterScore[][] = this.game.scores
+        fillToSize(scores, this.maxGuesses, this.unscoredArray())
+
+        return [words, scores]
     }
 
-    input(inputValue: string) {
-        if (inputValue === Commands.BACKSPACE) {
-            this._currentGuess = this._currentGuess.slice(0, -1)
-        } else if (inputValue === Commands.ENTER) {
-            this.guess()
-        } else if (inputValue === Commands.RESET) {
+    private changeCurrentGuess(newValue: string): WordleGameController {
+        return new WordleGameController(this.wordLength, this.maxGuesses, this.game, newValue)
+    }
+
+    input(inputValue: string): WordleGameController {
+        console.log("Input: " + inputValue)
+        if (inputValue === Commands.RESET) {
             this.game.reset()
-        } else if (isValidInputChar(inputValue) && this._currentGuess.length < this.wordLength) {
-            this._currentGuess += inputValue.toUpperCase()
-        } else {
-            throw GameError.InvalidCommand
+            return this.changeCurrentGuess("")
+        } else if (this.state === GameState.PLAYING) {
+            if (inputValue === Commands.BACKSPACE) {
+                return this.changeCurrentGuess(this._currentGuess.slice(0, -1))
+            } else if (inputValue === Commands.ENTER) {
+                return this.guess()
+            } else if (isValidInputChar(inputValue) && this._currentGuess.length < this.wordLength) {
+                return this.changeCurrentGuess(this._currentGuess + inputValue.toUpperCase())
+            }
         }
+        return this
     }
 
     private guess() {
         try {
             this.game.guess(this._currentGuess)
-            this._currentGuess = ""
+            return new WordleGameController(this.wordLength, this.maxGuesses, this.game, "")
         } catch (error) {
-            console.error(error)
+            console.debug("Error while guessing:" + error)
+            return this
         }
     }
 
@@ -71,16 +82,4 @@ export default class WordleGameController {
     private emptyWord = () => new Array(this.wordLength).fill('')
 }
 
-/**
- * Pushes values into a given array untill it has a given size. (Mutates the array)
- * @param arr The array to push values into
- * @param size The required size of the array. If less than the current size the array will be unchanged
- * @param value The value to push into the array
- */
-function fillToSize<T>(arr: Array<T>, size: number, value: T) {
-    while (arr.length < size) {
-        arr.push(value)
-    }
-}
-
-const isValidInputChar = (str: string) => str.length === 1 && str.match(/[A-Za-z]/)
+const isValidInputChar = (str: string) => str.match(/[A-Za-z]/) && str.length === 1

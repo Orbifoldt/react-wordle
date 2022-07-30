@@ -1,7 +1,7 @@
 import './tile.css'
 
 interface TileProps {
-    state?: "default" | "yellow" | "green" | "gray"
+    state: "default" | "yellow" | "green" | "gray"
     value: string
 }
 

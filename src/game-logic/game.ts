@@ -16,6 +16,7 @@ export class GameError extends Error {
 
 export default class WordleGame {
     constructor(public readonly wordLength: number, public readonly maxGuesses: number) {
+        console.log("Secret target = " + this.targetWord)
         if (wordLength !== 5) {
             throw Error("Only word length 5 is supported for now!")
         }
