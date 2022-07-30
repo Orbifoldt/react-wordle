@@ -71,7 +71,6 @@
   "jest": {
     "resetMocks": false,
     "clearMocks": true
-  },
-  "type": "module"
+  }
   
 }

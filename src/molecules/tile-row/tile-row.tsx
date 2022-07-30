@@ -4,7 +4,7 @@ import { Score } from "../../game-logic/game-controller"
 import { LetterScore } from "../../game-logic/score"
 import './tile-row.css'
 
-interface TileRowProps {
+export interface TileRowProps {
     guess: string[]
     score: Score[]
 }

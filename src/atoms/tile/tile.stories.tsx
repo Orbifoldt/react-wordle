@@ -3,7 +3,7 @@ import { ComponentStory, ComponentMeta } from "@storybook/react";
 import Tile from "./tile";
 
 export default {
-    title: "Primitives/tile",
+    title: "Atoms/Tile",
     component: Tile,
 } as ComponentMeta<typeof Tile>
 
@@ -29,4 +29,10 @@ export const Green = Template.bind({})
 Green.args = {
     value: "A",
     state: "green"
+}
+
+export const Gray = Template.bind({})
+Gray.args = {
+    value: "A",
+    state: "gray"
 }

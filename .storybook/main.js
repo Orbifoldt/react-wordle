@@ -2,7 +2,9 @@ module.exports = {
   "stories": [
     "../src/**/*.stories.mdx",
     "../src/**/*.stories.@(js|jsx|ts|tsx)",
-    "../src/**/*.primitives.@(js|jsx|ts|tsx)"
+    "../src/**/*.atoms.@(js|jsx|ts|tsx)",
+    "../src/**/*.molecules.@(js|jsx|ts|tsx)",
+    "../src/**/*.organisms.@(js|jsx|ts|tsx)"
   ],
   "addons": [
     "@storybook/addon-links",
