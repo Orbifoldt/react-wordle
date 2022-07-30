@@ -10,12 +10,15 @@ const guess3: string = "OUIJA"
 
 const mockRandomWord: jest.Mock<string, [number]> = jest.fn()
     .mockImplementation((num: number) => target)
+const mockIsWordValid: jest.Mock<boolean, [string]> = jest.fn()
+    .mockImplementation(() => true)
 jest.mock('./random-words', () => {
     const originalRandomWordsModule = jest.requireActual('./random-words')
     return {
         __esModule: true,
         ...originalRandomWordsModule,  // partial mock
         randomWord: () => mockRandomWord(0),
+        isWordValid: (input: string) => mockIsWordValid(input)
     }
 });
 
@@ -106,9 +109,12 @@ describe("Gameplay: guessing and getting scores", () => {
         })
 
     test('should only accept valid english words', () => {
+        mockIsWordValid.mockImplementation((input: string) => input !== "XZORT")
+
         const game = new WordleGame(5, 5)
 
         expect(() => game.guess("XZORT")).toThrowError(GameError.InvalidGuess)
+        expect(mockIsWordValid).toBeCalledWith("XZORT")
     })
 })
 

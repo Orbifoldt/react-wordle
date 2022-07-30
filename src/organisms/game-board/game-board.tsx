@@ -5,6 +5,8 @@ import TileRow from "../../molecules/tile-row"
 
 const GameBoard = (props: WordleGame): JSX.Element => {
 
+    // TODO: move more of this logic to the actual game object...
+
     const [currentGuess, setCurrentGuess] = useState("ABC")
 
     function mapping(props: WordleGame): JSX.Element[] {

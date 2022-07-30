@@ -11,8 +11,8 @@ export class GameError extends Error {
     static readonly InvalidGuessLength = new GameError(`Invalid guess! Number of letters does not match word length.`)
     static readonly InvalidGuessSymbol = new GameError(`Invalid guess! Your guess may only contain the symbols A-Z.`)
     static readonly InvalidGuess = new GameError(`Invalid guess! Should be a valid english word`)
+    static readonly InvalidCommand = new GameError("Shouldn't guess more than one letter at a time")
 }
-
 
 export default class WordleGame {
     constructor(public readonly wordLength: number, public readonly maxGuesses: number) {
